@@ -147,17 +147,19 @@ describe('Local Storage Data Layer Repositories (Corrected Business Rules)', () 
   });
 
   describe('6. Booking Repository', () => {
-    it('should save booking and generate unique reference', () => {
-      const booking = bookingRepository.save({
-        cruiseId: 'CRZ-101',
-        totalPrice: 1500,
+    it('should create booking and generate unique reference', () => {
+      const booking = bookingRepository.createBooking({
+        customer: { name: 'Test User', email: 'test@example.com' },
+        cruise: 'CRZ-101',
+        passengers: [{ age: 30 }],
       });
 
       expect(booking.id).toBeDefined();
       expect(booking.bookingReference).toMatch(/^CRZ-[A-Z0-9]{6}$/);
 
       const retrieved = bookingRepository.getByReference(booking.bookingReference);
-      expect(retrieved.totalPrice).toBe(1500);
+      expect(retrieved.customer.email).toBe('test@example.com');
+      expect(retrieved.cruise.name).toBe('Wonder of the Seas');
     });
   });
 
