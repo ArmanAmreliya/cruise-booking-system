@@ -1,22 +1,26 @@
 import { useState } from 'react';
-import { Gift, CheckCircle2, AlertCircle } from 'lucide-react';
-import { validatePromotion } from '../services/promotionService';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 
-export default function StepPromotion({ promoCode, setPromoCode, subtotal, currentDate }) {
+export default function StepPromotion({ promoCode, setPromoCode, subtotal }) {
   const [input, setInput] = useState(promoCode);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleApply = () => {
+  const handleApply = async () => {
     if (!input.trim()) return;
     setLoading(true);
+    setResult(null);
 
     try {
-      const validation = validatePromotion({
-        promoCode: input.trim(),
-        preDiscountSubtotal: subtotal,
-        currentDate,
+      const res = await fetch('/api/promotions/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          promoCode: input.trim(),
+          preDiscountSubtotal: subtotal / 100, // input subtotal is in cents, API expects dollars
+        }),
       });
+      const validation = await res.json();
 
       setResult(validation);
 

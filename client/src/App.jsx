@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   Check,
   AlertTriangle,
-  Compass,
   Users,
   Shield,
   Gift,
@@ -14,9 +13,8 @@ import {
 } from 'lucide-react';
 import './booking.css';
 
-import { initLocalStorage, cruiseRepository, optionalServiceRepository } from './storage';
-import { calculatePriceBreakdown } from './services/pricingService';
-import { confirmBooking } from './services/bookingService';
+// Services and storage are now fully handled by the Express/MySQL backend.
+
 
 import StepCruise from './components/StepCruise.jsx';
 import StepTravellers from './components/StepTravellers.jsx';
@@ -26,7 +24,8 @@ import StepReview from './components/StepReview.jsx';
 import StepConfirmation from './components/StepConfirmation.jsx';
 
 // Initialise local-storage seed data once
-initLocalStorage(false);
+// No localStorage initialization needed
+
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -45,7 +44,7 @@ export default function App() {
 
   // Booking State
   const [cruise, setCruise] = useState(null);
-  const [customer, setCustomer] = useState({ name: '', email: '', phone: '' });
+  const [customer, setCustomer] = useState({ id: 'CUST-ARMAN', name: 'Arman', email: 'arman@example.com', phone: '+91-9999-0001' });
   const [adults, setAdults] = useState(1);
   const [childAges, setChildAges] = useState([]);
   const [serviceIds, setServiceIds] = useState([]);
@@ -57,8 +56,22 @@ export default function App() {
   const [services, setServices] = useState([]);
 
   useEffect(() => {
-    setCruises(cruiseRepository.getAll());
-    setServices(optionalServiceRepository.getAll());
+    const loadStaticData = async () => {
+      try {
+        const [cruisesRes, servicesRes] = await Promise.all([
+          fetch('/api/cruises'),
+          fetch('/api/services')
+        ]);
+        const cruisesData = await cruisesRes.json();
+        const servicesData = await servicesRes.json();
+        setCruises(cruisesData);
+        setServices(servicesData);
+      } catch (err) {
+        console.error('Failed to load cruises/services:', err);
+        setError('Connection failure: Unable to fetch voyages or service pricing rules.');
+      }
+    };
+    loadStaticData();
   }, []);
 
   // Passenger list for pricing engine
@@ -68,25 +81,58 @@ export default function App() {
     return [...adultPassengers, ...childPassengers];
   }, [adults, childAges]);
 
-  // Live price breakdown (computed whenever inputs change)
-  const breakdown = useMemo(() => {
-    if (!cruise || passengers.length === 0) return null;
+  const [breakdown, setBreakdown] = useState(null);
+
+  useEffect(() => {
+    if (!cruise || passengers.length === 0) {
+      setBreakdown(null);
+      return;
+    }
     const validAges = passengers.every(
       (p) => Number.isInteger(p.age) && p.age >= 0
     );
-    if (!validAges) return null;
-    try {
-      return calculatePriceBreakdown({
-        cruise,
-        passengers,
-        selectedOptionalServiceIds: serviceIds,
-        promoCode,
-        currentDate: TODAY,
-      });
-    } catch {
-      return null;
+    if (!validAges) {
+      setBreakdown(null);
+      return;
     }
-  }, [cruise, passengers, serviceIds, promoCode]);
+
+    let active = true;
+    const fetchQuote = async () => {
+      try {
+        const res = await fetch('/api/bookings/quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cruiseId: cruise.id,
+            passengers,
+            selectedOptionalServiceIds: serviceIds,
+            promoCode,
+            customerId: customer.id || null,
+          }),
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Failed to fetch quote');
+        }
+        const data = await res.json();
+        if (active) {
+          setBreakdown(data);
+          setError('');
+        }
+      } catch (err) {
+        if (active) {
+          setBreakdown(null);
+          // Don't show validation errors as banner alerts during typing, just log them
+          console.warn('Quote calculation error:', err.message);
+        }
+      }
+    };
+
+    fetchQuote();
+    return () => {
+      active = false;
+    };
+  }, [cruise, passengers, serviceIds, promoCode, customer.id]);
 
   // Toggle service selection
   const toggleService = (id) =>
@@ -138,17 +184,27 @@ export default function App() {
   };
 
   // Confirm booking
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setError('');
     try {
-      const booking = confirmBooking({
-        customer,
-        cruise,
-        passengers,
-        selectedOptionalServiceIds: serviceIds,
-        promoCode,
-        currentDate: TODAY,
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer,
+          cruiseId: cruise.id,
+          passengers,
+          selectedOptionalServiceIds: serviceIds,
+          promoCode,
+        }),
       });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Booking confirmation failed.');
+      }
+
+      const booking = await res.json();
       setConfirmedBooking(booking);
       setStep(6);
     } catch (e) {
@@ -157,10 +213,17 @@ export default function App() {
   };
 
   // Start over
-  const handleStartOver = () => {
-    setCruises(cruiseRepository.getAll());
+  const handleStartOver = async () => {
+    // Reload cruises so seat counts are fresh in real-time
+    try {
+      const res = await fetch('/api/cruises');
+      const data = await res.json();
+      setCruises(data);
+    } catch (err) {
+      console.error('Failed to reload cruises:', err);
+    }
     setCruise(null);
-    setCustomer({ name: '', email: '', phone: '' });
+    setCustomer({ id: 'CUST-ARMAN', name: 'Arman', email: 'arman@example.com', phone: '+91-9999-0001' });
     setAdults(1);
     setChildAges([]);
     setServiceIds([]);
@@ -206,8 +269,6 @@ export default function App() {
           const isDone = step > s.id;
           const isDoneFinal = s.id === 6 && step === 6;
           const isFuture = step < s.id;
-
-          const StepIcon = s.icon;
 
           return (
             <div key={s.id} style={{ display: 'flex', alignItems: 'center', flexGrow: index < STEPS.length - 1 ? 1 : 0 }}>
