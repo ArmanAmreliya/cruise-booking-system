@@ -12,8 +12,7 @@ const rateLimiter = rateLimit({
     error: 'Too many requests, please try again later.',
     statusCode: 429,
   },
-  // Ensure that in test environments, rate limiter uses key Generator correctly or doesn't fail
-  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
+  validate: { xForwardedForHeader: false },
 });
 
 module.exports = rateLimiter;
