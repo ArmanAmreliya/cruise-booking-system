@@ -3,6 +3,8 @@ const cors = require('cors');
 const healthRoutes = require('./routes/health.routes');
 const cruisesRoutes = require('./routes/cruises.routes');
 const servicesRoutes = require('./routes/services.routes');
+const bookingsRoutes = require('./routes/bookings.routes');
+const promotionsRoutes = require('./routes/promotions.routes');
 
 const app = express();
 
@@ -14,6 +16,8 @@ app.use(express.json());
 app.use('/api', healthRoutes);
 app.use('/api/cruises', cruisesRoutes);
 app.use('/api/services', servicesRoutes);
+app.use('/api/bookings', bookingsRoutes);
+app.use('/api/promotions', promotionsRoutes);
 
 // Root route
 app.get('/', (req, res) => {
