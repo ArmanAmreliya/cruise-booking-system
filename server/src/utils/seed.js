@@ -20,10 +20,11 @@ async function createDatabaseIfNeeded() {
     user:     process.env.MYSQL_USER     || 'root',
     password: process.env.MYSQL_PASSWORD || '',
   });
+  await tmpConn.query(`DROP DATABASE IF EXISTS \`${dbName}\``);
   await tmpConn.query(
     `CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
   );
-  console.log(`  ✔ Database \`${dbName}\` ready`);
+  console.log(`  ✔ Database \`${dbName}\` recreated`);
   await tmpConn.end();
 }
 
@@ -65,7 +66,8 @@ const SEED_OPTIONAL_SERVICES = [
 ];
 
 const SEED_CUSTOMERS = [
-  { id: 'CUST-001', name: 'John Doe', email: 'john.doe@example.com', phone: '+1-555-0199' },
+  { id: 'CUST-001', name: 'John Doe',      email: 'john.doe@example.com',  phone: '+1-555-0199' },
+  { id: 'CUST-ARMAN', name: 'Arman',       email: 'arman@example.com',     phone: '+91-9999-0001' },
 ];
 
 // ── Seed helpers ─────────────────────────────────────────────────────────────
