@@ -1,86 +1,85 @@
 import fmt from '../utils/fmt';
 
-/**
- * Step 5 — Price Review
- * Renders the complete breakdown from pricingService output.
- */
 export default function StepReview({ breakdown }) {
   if (!breakdown) {
     return (
-      <p style={{ color: 'var(--muted)', fontSize: '.9rem' }}>
-        Price breakdown is being calculated…
+      <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+        Calculating exact quotation details...
       </p>
     );
   }
 
-  const { cruise, passengers, groupDiscount, optionalServices,
-    promotionalDiscount, tax, finalTotal,
-    cruiseFareSubtotal, preDiscountSubtotal, discountedCruiseFare } = breakdown;
+  const {
+    cruiseFareSubtotal,
+    passengers,
+    groupDiscount,
+    optionalServices,
+    promotionalDiscount,
+    tax,
+    finalTotal,
+  } = breakdown;
 
   return (
-    <div className="breakdown-rows">
-      {/* ── Cruise fares ── */}
-      <div className="bd-row">
-        <span className="label">Cruise Fares</span>
+    <div className="breakdown-table">
+      {/* Cruise Fares */}
+      <div className="breakdown-row" style={{ fontWeight: 700 }}>
+        <span className="lbl">Base Cruise Fare</span>
         <span className="val">{fmt(cruiseFareSubtotal)}</span>
       </div>
 
       {passengers.breakdown.map((p, i) => (
-        <div key={i} className="bd-row sub-row">
-          <span className="label">
-            {p.type === 'Adult' ? `Adult` : `Child (age ${p.age})`}
-            {p.farePercentage < 100 ? ` — ${p.farePercentage}%` : ''}
+        <div key={i} className="breakdown-row indent">
+          <span>
+            {p.type === 'Adult' ? 'Adult Guest' : `Child Guest (Age ${p.age})`}
+            {p.farePercentage < 100 ? ` (${p.farePercentage}% fare rule)` : ''}
           </span>
           <span className="val">{fmt(p.fare)}</span>
         </div>
       ))}
 
-      {/* ── Group Discount ── */}
+      {/* Group Discounts */}
       {groupDiscount.discountPercentage > 0 && (
-        <div className="bd-row discount">
-          <span className="label">Group Discount ({groupDiscount.discountPercentage}%)</span>
+        <div className="breakdown-row discount">
+          <span>Group Discount ({groupDiscount.discountPercentage}%)</span>
           <span className="val">−{fmt(groupDiscount.amount)}</span>
         </div>
       )}
 
-      {/* ── Optional Services ── */}
+      {/* Optional Services */}
       {optionalServices.items.length > 0 && (
         <>
-          <div className="bd-row">
-            <span className="label">Optional Services</span>
+          <div className="breakdown-row" style={{ fontWeight: 700, marginTop: '0.5rem' }}>
+            <span>Optional Amenities</span>
             <span className="val">{fmt(optionalServices.subtotal)}</span>
           </div>
           {optionalServices.items.map((svc, i) => (
-            <div key={i} className="bd-row sub-row">
-              <span className="label">{svc.name}</span>
+            <div key={i} className="breakdown-row indent">
+              <span>{svc.name}</span>
               <span className="val">{fmt(svc.totalCost)}</span>
             </div>
           ))}
         </>
       )}
 
-      {/* ── Promo Discount ── */}
+      {/* Promotional Discounts */}
       {promotionalDiscount?.applied && (
-        <div className="bd-row discount">
-          <span className="label">
-            Promo: {promotionalDiscount.code}
-            {' '}({promotionalDiscount.discountType === 'PERCENTAGE'
-              ? `${promotionalDiscount.discountValue}% off`
-              : `$${promotionalDiscount.discountValue} fixed`})
+        <div className="breakdown-row discount" style={{ marginTop: '0.5rem' }}>
+          <span>
+            Promo Code Discount: {promotionalDiscount.code} ({promotionalDiscount.discountType === 'PERCENTAGE' ? `${promotionalDiscount.discountValue}%` : 'Fixed'})
           </span>
           <span className="val">−{fmt(promotionalDiscount.amount)}</span>
         </div>
       )}
 
-      {/* ── Tax ── */}
-      <div className="bd-row">
-        <span className="label">Tax ({tax.ratePercentage}%)</span>
+      {/* Taxes & Port Fees */}
+      <div className="breakdown-row" style={{ marginTop: '0.5rem' }}>
+        <span>Taxes & Fees ({tax.ratePercentage}%)</span>
         <span className="val">{fmt(tax.amount)}</span>
       </div>
 
-      {/* ── Grand Total ── */}
-      <div className="bd-row total">
-        <span className="label">Total</span>
+      {/* Grand Charged Total */}
+      <div className="breakdown-row total-row">
+        <span>Grand Total Charged</span>
         <span className="val">{fmt(finalTotal)}</span>
       </div>
     </div>

@@ -1,9 +1,7 @@
 import { useState } from 'react';
+import { Gift, CheckCircle2, AlertCircle } from 'lucide-react';
 import { validatePromotion } from '../services/promotionService';
 
-/**
- * Step 4 — Promotion Code
- */
 export default function StepPromotion({ promoCode, setPromoCode, subtotal, currentDate }) {
   const [input, setInput] = useState(promoCode);
   const [result, setResult] = useState(null);
@@ -43,11 +41,11 @@ export default function StepPromotion({ promoCode, setPromoCode, subtotal, curre
 
   return (
     <div>
-      <p style={{ fontSize: '.9rem', color: 'var(--muted)', marginBottom: '1.25rem' }}>
-        Enter a promotional code to apply a discount. Only one code can be applied per booking.
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+        Have a promotional offer code? Enter it below to apply it to your booking subtotal. Only one promotion can be used per voyage.
       </p>
 
-      <div className="promo-row">
+      <div className="promo-input-group">
         <input
           id="promo-code-input"
           className="form-input"
@@ -61,34 +59,43 @@ export default function StepPromotion({ promoCode, setPromoCode, subtotal, curre
           }}
           onKeyDown={(e) => e.key === 'Enter' && handleApply()}
           disabled={loading}
-          style={{ textTransform: 'uppercase', letterSpacing: '.05em' }}
+          style={{ textTransform: 'uppercase', letterSpacing: '.05em', fontWeight: 600, maxWidth: '280px' }}
         />
         <button
           id="promo-apply-btn"
           className="btn btn-primary"
           onClick={handleApply}
           disabled={!input.trim() || loading}
+          type="button"
         >
-          {loading ? '...' : 'Apply'}
+          {loading ? 'Validating...' : 'Apply Code'}
         </button>
         {(result || promoCode) && (
-          <button id="promo-clear-btn" className="btn btn-outline" onClick={handleClear}>
-            Clear
+          <button id="promo-clear-btn" className="btn btn-outline" onClick={handleClear} type="button">
+            Remove
           </button>
         )}
       </div>
 
       {result && (
-        <div className={`promo-msg ${result.valid ? 'ok' : 'err'}`} role="alert">
-          {result.valid
-            ? `✓ ${result.message}`
-            : `✗ ${result.error}`}
+        <div className={`promo-msg ${result.valid ? 'ok' : 'err'}`} role="alert" style={{ marginTop: '1rem' }}>
+          {result.valid ? (
+            <>
+              <CheckCircle2 size={16} />
+              <span>{result.message}</span>
+            </>
+          ) : (
+            <>
+              <AlertCircle size={16} />
+              <span>{result.error}</span>
+            </>
+          )}
         </div>
       )}
 
       {!promoCode && (
-        <p style={{ marginTop: '1.25rem', fontSize: '.85rem', color: 'var(--muted)' }}>
-          Skip this step if you do not have a code.
+        <p style={{ marginTop: '1.5rem', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+          You can safely skip this step and click Next if you do not have an active promo code.
         </p>
       )}
     </div>
