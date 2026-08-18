@@ -1,6 +1,14 @@
 const { getPool } = require('../utils/db');
+const logger = require('../utils/logger');
+const { recordPromoValidationFailure } = require('./monitoring.service');
 
 const createInvalidResult = (code, errorMessage) => {
+  logger.warn('promo_validation_failure', `Promotion validation failed for code '${code}': ${errorMessage}`, {
+    code,
+    error: errorMessage,
+  });
+  recordPromoValidationFailure();
+
   return {
     valid: false,
     code: code || '',

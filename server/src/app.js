@@ -5,12 +5,16 @@ const cruisesRoutes = require('./routes/cruises.routes');
 const servicesRoutes = require('./routes/services.routes');
 const bookingsRoutes = require('./routes/bookings.routes');
 const promotionsRoutes = require('./routes/promotions.routes');
+const monitoringRoutes = require('./routes/monitoring.routes');
+
+const monitoringMiddleware = require('./middleware/monitoring.middleware');
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(monitoringMiddleware);
 
 // Routes
 app.use('/api', healthRoutes);
@@ -18,6 +22,7 @@ app.use('/api/cruises', cruisesRoutes);
 app.use('/api/services', servicesRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/promotions', promotionsRoutes);
+app.use('/api/monitoring', monitoringRoutes);
 
 // Root route
 app.get('/', (req, res) => {

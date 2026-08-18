@@ -1,6 +1,8 @@
 const { getPool } = require('../utils/db');
 const { calculatePriceBreakdown } = require('./pricing.service');
 const { validatePromotionInternal } = require('./promotion.service');
+const logger = require('../utils/logger');
+const { recordBookingSuccess, recordBookingFailure } = require('./monitoring.service');
 
 const generateUniqueReference = async (connection) => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -34,6 +36,13 @@ const confirmBookingInternal = async ({
   const pool = getPool();
   const connection = await pool.getConnection();
 
+  logger.info('booking_attempt', `Attempting booking for cruise ${cruiseId}`, {
+    cruiseId,
+    passengerCount: passengers?.length,
+    selectedOptionalServiceIds,
+    promoCode,
+  });
+
   try {
     await connection.beginTransaction();
 
@@ -51,6 +60,9 @@ const confirmBookingInternal = async ({
     const totalPassengers = Array.isArray(passengers) ? passengers.length : 0;
     if (totalPassengers === 0) {
       throw new Error('At least one passenger is required.');
+    }
+    if (totalPassengers > 6) {
+      throw new Error('Booking party size cannot exceed 6 passengers.');
     }
 
     // 3. Check capacity
@@ -211,9 +223,24 @@ const confirmBookingInternal = async ({
     }
 
     await connection.commit();
+    
+    logger.info('booking_success', `Successfully confirmed booking reference ${bookingRecord.bookingReference}`, {
+      bookingReference: bookingRecord.bookingReference,
+      cruiseId: bookingRecord.cruise.id,
+      finalTotal: bookingRecord.finalTotal,
+    });
+    recordBookingSuccess();
+
     return bookingRecord;
   } catch (error) {
     await connection.rollback();
+    
+    logger.error('booking_failure', `Booking confirmation failed: ${error.message}`, {
+      cruiseId,
+      error: error.message,
+    });
+    recordBookingFailure();
+
     throw error;
   } finally {
     connection.release();
