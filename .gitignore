@@ -26,3 +26,7 @@ coverage/
 Thumbs.db
 .vscode/
 .idea/
+
+# Local databases / MySQL data
+mysql_data/
+
