@@ -1,105 +1,147 @@
 export const SEED_CRUISES = [
   {
     id: 'CRZ-101',
-    name: 'Caribbean Sunshine Cruise',
+    line: 'Royal Caribbean',
+    name: 'Wonder of the Seas',
     destination: 'Caribbean',
-    departureDate: '2026-10-15',
     durationNights: 7,
-    baseAdultFare: 800, // Price in USD
-    capacity: 50,
-    availableSeats: 50,
+    baseAdultFare: 1200,
+    capacity: 12,
+    availableSeats: 12,
   },
   {
     id: 'CRZ-102',
-    name: 'Mediterranean Discovery Voyage',
+    line: 'Celebrity Cruises',
+    name: 'Celebrity Beyond',
     destination: 'Mediterranean',
-    departureDate: '2026-11-01',
     durationNights: 10,
-    baseAdultFare: 1200,
-    capacity: 40,
-    availableSeats: 40,
+    baseAdultFare: 1850,
+    capacity: 4,
+    availableSeats: 4,
   },
   {
     id: 'CRZ-103',
-    name: 'Alaskan Glacier Expedition',
+    line: 'Norwegian Cruise Line',
+    name: 'Norwegian Prima',
     destination: 'Alaska',
-    departureDate: '2026-09-20',
     durationNights: 5,
     baseAdultFare: 950,
-    capacity: 30,
-    availableSeats: 30,
+    capacity: 20,
+    availableSeats: 20,
+  },
+  {
+    id: 'CRZ-104',
+    line: 'Princess Cruises',
+    name: 'Sky Princess',
+    destination: 'North Europe',
+    durationNights: 12,
+    baseAdultFare: 2100,
+    capacity: 2,
+    availableSeats: 2,
+  },
+  {
+    id: 'CRZ-105',
+    line: 'MSC Cruises',
+    name: 'MSC Seascape',
+    destination: 'Atlantic to Bahamas',
+    durationNights: 4,
+    baseAdultFare: 700,
+    capacity: 0,
+    availableSeats: 0,
   },
 ];
 
 export const SEED_PROMO_CODES = [
   {
     id: 'PROMO-001',
-    code: 'WELCOME10',
+    code: 'SUMMER10',
     discountType: 'PERCENTAGE', // PERCENTAGE or FIXED
     value: 10, // 10%
+    startDate: '2026-06-01',
+    endDate: '2026-08-31',
+    maxTotalRedemptions: 100,
+    maxPerCustomer: 1,
+    minSpend: 1000,
     active: true,
-    description: '10% discount on pre-tax subtotal',
+    description: '10% off for summer cruises ($1,000 min spend)',
   },
   {
     id: 'PROMO-002',
-    code: 'SUMMER50',
+    code: 'FIRST150',
     discountType: 'FIXED',
-    value: 50, // $50 flat discount
+    value: 150, // $150 fixed discount
+    startDate: '2026-01-01',
+    endDate: '2026-12-31',
+    maxTotalRedemptions: 500,
+    maxPerCustomer: 1,
+    minSpend: 2000,
     active: true,
-    description: '$50 flat discount on pre-tax subtotal',
+    description: '$150 fixed discount ($2,000 min spend)',
   },
   {
     id: 'PROMO-003',
-    code: 'SAIL2026',
+    code: 'CREW25',
     discountType: 'PERCENTAGE',
-    value: 15, // 15%
+    value: 25, // 25%
+    startDate: '2026-01-01',
+    endDate: '2026-12-31',
+    maxTotalRedemptions: 3,
+    maxPerCustomer: 3,
+    minSpend: 0,
     active: true,
-    description: '15% discount on pre-tax subtotal',
+    description: '25% crew & staff discount',
+  },
+  {
+    id: 'PROMO-004',
+    code: 'WINTER5',
+    discountType: 'PERCENTAGE',
+    value: 5, // 5%
+    startDate: '2025-01-01',
+    endDate: '2025-03-31',
+    maxTotalRedemptions: 1000,
+    maxPerCustomer: 5,
+    minSpend: 0,
+    active: true,
+    description: '5% winter discount (Expired)',
   },
 ];
 
 export const SEED_PRICING_RULES = {
   taxRate: 0.12, // 12% mandatory tax
   childAgeRules: [
-    { minAge: 0, maxAge: 2, discountPercentage: 100, label: 'Infant (0-2 years)' },
-    { minAge: 3, maxAge: 12, discountPercentage: 50, label: 'Child (3-12 years)' },
-    { minAge: 13, maxAge: 17, discountPercentage: 25, label: 'Teen (13-17 years)' },
+    { minAge: 0, maxAge: 4, farePercentage: 0, label: 'Toddler/Infant (0-4 yrs): 0% fare' },
+    { minAge: 5, maxAge: 11, farePercentage: 50, label: 'Child (5-11 yrs): 50% fare' },
+    { minAge: 12, maxAge: 17, farePercentage: 75, label: 'Teen (12-17 yrs): 75% fare' },
+    { minAge: 18, maxAge: 120, farePercentage: 100, label: 'Adult (18+ yrs): 100% fare' },
   ],
-  groupDiscountRule: {
-    minPassengers: 5,
-    discountPercentage: 10, // 10% discount on base adult fares for groups >= 5
-    label: 'Group Discount (5+ Passengers)',
-  },
+  groupDiscountRules: [
+    { minPassengers: 1, maxPassengers: 2, discountPercentage: 0, label: '1-2 Passengers: 0% discount' },
+    { minPassengers: 3, maxPassengers: 4, discountPercentage: 5, label: '3-4 Passengers: 5% discount' },
+    { minPassengers: 5, maxPassengers: 6, discountPercentage: 10, label: '5-6 Passengers: 10% discount' },
+  ],
 };
 
 export const SEED_OPTIONAL_SERVICES = [
   {
     id: 'SVC-001',
-    name: 'Unlimited Wi-Fi Package',
-    price: 50,
-    billingModel: 'per_booking', // per_booking or per_person
-    description: 'High-speed internet access for the entire stay',
+    name: 'Insurance',
+    price: 80,
+    billingModel: 'per_passenger',
+    description: 'Full travel protection ($80 per passenger)',
   },
   {
     id: 'SVC-002',
-    name: 'Beverage & Dining Pass',
-    price: 120,
-    billingModel: 'per_person',
-    description: 'Unlimited premium drinks and specialty restaurant dining',
+    name: 'Wi-Fi',
+    price: 15,
+    billingModel: 'per_passenger_per_night',
+    description: 'High-speed Wi-Fi ($15 per passenger per night)',
   },
   {
     id: 'SVC-003',
-    name: 'Shore Excursion Pass',
-    price: 150,
-    billingModel: 'per_person',
-    description: 'Guided shore tours at all port destinations',
-  },
-  {
-    id: 'SVC-004',
-    name: 'Travel Insurance',
-    price: 40,
-    billingModel: 'per_booking',
-    description: 'Full trip cancellation and medical coverage',
+    name: 'Shore Excursion',
+    price: 120,
+    billingModel: 'per_passenger',
+    description: 'Guided shore tours pass ($120 per passenger)',
   },
 ];
 
