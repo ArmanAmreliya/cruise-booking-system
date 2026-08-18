@@ -1,46 +1,59 @@
 import { useState, useEffect, useMemo } from 'react';
+import {
+  Ship,
+  ChevronRight,
+  ChevronLeft,
+  Check,
+  AlertTriangle,
+  Compass,
+  Users,
+  Shield,
+  Gift,
+  FileText,
+  CheckCircle2,
+} from 'lucide-react';
 import './booking.css';
 
 import { initLocalStorage, cruiseRepository, optionalServiceRepository } from './storage';
 import { calculatePriceBreakdown } from './services/pricingService';
-import { confirmBooking }          from './services/bookingService';
+import { confirmBooking } from './services/bookingService';
 
-import StepCruise        from './components/StepCruise.jsx';
-import StepTravellers    from './components/StepTravellers.jsx';
-import StepServices      from './components/StepServices.jsx';
-import StepPromotion     from './components/StepPromotion.jsx';
-import StepReview        from './components/StepReview.jsx';
-import StepConfirmation  from './components/StepConfirmation.jsx';
+import StepCruise from './components/StepCruise.jsx';
+import StepTravellers from './components/StepTravellers.jsx';
+import StepServices from './components/StepServices.jsx';
+import StepPromotion from './components/StepPromotion.jsx';
+import StepReview from './components/StepReview.jsx';
+import StepConfirmation from './components/StepConfirmation.jsx';
 
-// ── Initialise local-storage seed data once ──────────────────────────────────
+// Initialise local-storage seed data once
 initLocalStorage(false);
 
 const TODAY = new Date().toISOString().split('T')[0];
 
 const STEPS = [
-  { id: 1, label: 'Cruise' },
-  { id: 2, label: 'Travellers' },
-  { id: 3, label: 'Services' },
-  { id: 4, label: 'Promo' },
-  { id: 5, label: 'Review' },
-  { id: 6, label: 'Done' },
+  { id: 1, label: 'Cruise', icon: Ship },
+  { id: 2, label: 'Travellers', icon: Users },
+  { id: 3, label: 'Services', icon: Shield },
+  { id: 4, label: 'Promo', icon: Gift },
+  { id: 5, label: 'Review', icon: FileText },
+  { id: 6, label: 'Done', icon: CheckCircle2 },
 ];
 
 export default function App() {
-  const [step, setStep]       = useState(1);
-  const [error, setError]     = useState('');
+  const [step, setStep] = useState(1);
+  const [error, setError] = useState('');
 
-  // ── Booking State ──────────────────────────────────────────────────────────
-  const [cruise,      setCruise]      = useState(null);
-  const [customer,    setCustomer]    = useState({ name: '', email: '', phone: '' });
-  const [adults,      setAdults]      = useState(1);
-  const [childAges,   setChildAges]   = useState([]);
-  const [serviceIds,  setServiceIds]  = useState([]);
-  const [promoCode,   setPromoCode]   = useState('');
+  // Booking State
+  const [cruise, setCruise] = useState(null);
+  const [customer, setCustomer] = useState({ name: '', email: '', phone: '' });
+  const [adults, setAdults] = useState(1);
+  const [childAges, setChildAges] = useState([]);
+  const [serviceIds, setServiceIds] = useState([]);
+  const [promoCode, setPromoCode] = useState('');
   const [confirmedBooking, setConfirmedBooking] = useState(null);
 
-  // ── Static data from localStorage ─────────────────────────────────────────
-  const [cruises,  setCruises]  = useState([]);
+  // Static data from localStorage
+  const [cruises, setCruises] = useState([]);
   const [services, setServices] = useState([]);
 
   useEffect(() => {
@@ -48,14 +61,14 @@ export default function App() {
     setServices(optionalServiceRepository.getAll());
   }, []);
 
-  // ── Passenger list for pricing engine ─────────────────────────────────────
+  // Passenger list for pricing engine
   const passengers = useMemo(() => {
     const adultPassengers = Array.from({ length: adults }, () => ({ age: 30 }));
-    const childPassengers = childAges.map((a) => ({ age: Number(a) }));
+    const childPassengers = childAges.map((a) => ({ age: a === '' ? NaN : Number(a) }));
     return [...adultPassengers, ...childPassengers];
   }, [adults, childAges]);
 
-  // ── Live price breakdown (computed whenever inputs change) ─────────────────
+  // Live price breakdown (computed whenever inputs change)
   const breakdown = useMemo(() => {
     if (!cruise || passengers.length === 0) return null;
     const validAges = passengers.every(
@@ -75,27 +88,41 @@ export default function App() {
     }
   }, [cruise, passengers, serviceIds, promoCode]);
 
-  // ── Toggle service selection ───────────────────────────────────────────────
+  // Toggle service selection
   const toggleService = (id) =>
     setServiceIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
 
-  // ── Navigation ────────────────────────────────────────────────────────────
+  // Navigation validation
   const canAdvance = () => {
     setError('');
     if (step === 1) {
-      if (!cruise) { setError('Please select a cruise to continue.'); return false; }
+      if (!cruise) {
+        setError('Please select a cruise itinerary to continue.');
+        return false;
+      }
     }
     if (step === 2) {
-      if (!customer.name.trim()) { setError('Please enter your full name.'); return false; }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)) {
-        setError('Please enter a valid email address.'); return false;
+      if (!customer.name.trim()) {
+        setError('Please enter your full name.');
+        return false;
       }
-      if (adults < 1) { setError('At least one adult is required.'); return false; }
-      const badAge = childAges.findIndex((a) => a === '' || isNaN(a) || Number(a) < 0 || Number(a) > 17);
-      if (badAge !== -1) {
-        setError(`Please enter a valid age (0–17) for child ${badAge + 1}.`); return false;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(customer.email)) {
+        setError('Please enter a valid email address.');
+        return false;
+      }
+      if (adults < 1) {
+        setError('At least one adult passenger is required.');
+        return false;
+      }
+      const badAgeIndex = childAges.findIndex(
+        (a) => a === '' || isNaN(a) || Number(a) < 0 || Number(a) > 17
+      );
+      if (badAgeIndex !== -1) {
+        setError(`Please specify a valid age (0-17) for Child ${badAgeIndex + 1}.`);
+        return false;
       }
     }
     return true;
@@ -110,7 +137,7 @@ export default function App() {
     setStep((s) => Math.max(s - 1, 1));
   };
 
-  // ── Confirm booking ────────────────────────────────────────────────────────
+  // Confirm booking
   const handleConfirm = () => {
     setError('');
     try {
@@ -129,9 +156,8 @@ export default function App() {
     }
   };
 
-  // ── Start over ─────────────────────────────────────────────────────────────
+  // Start over
   const handleStartOver = () => {
-    // Reload cruise data so seat counts are fresh
     setCruises(cruiseRepository.getAll());
     setCruise(null);
     setCustomer({ name: '', email: '', phone: '' });
@@ -144,59 +170,109 @@ export default function App() {
     setStep(1);
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-  const stepTitles = ['Select a Cruise', 'Travellers', 'Optional Services',
-    'Promotional Code', 'Review & Price', 'Booking Confirmed'];
+  // Render Step Title Icon
+  const getStepIcon = (currentStep) => {
+    const matched = STEPS.find((s) => s.id === currentStep);
+    if (!matched) return null;
+    const IconComponent = matched.icon;
+    return <IconComponent size={22} />;
+  };
+
+  const stepTitles = [
+    'Select Your Cruise',
+    'Traveller Details',
+    'Optional Services & Amenities',
+    'Apply Promotional Discount',
+    'Review Quotation Details',
+    'Booking Confirmed',
+  ];
 
   return (
     <div className="booking-app">
-      {/* ── App Header ── */}
+      {/* App Header */}
       <header className="app-header">
-        <div className="brand">🚢 Cruise Booking System</div>
-        <h1>Book Your Cruise</h1>
-        <p>Find your perfect voyage and confirm in minutes</p>
+        <div className="brand">
+          <Ship size={18} />
+          <span>Cruise Booking System</span>
+        </div>
+        <h1>Book Your Voyage</h1>
+        <p>Explore luxury cruise liners, configure your travel party, and confirm booking instantly.</p>
       </header>
 
-      {/* ── Stepper ── */}
+      {/* Stepper with Progress Dividers */}
       <nav className="stepper" aria-label="Booking steps">
-        {STEPS.map((s) => (
-          <div
-            key={s.id}
-            className={[
-              'step-pill',
-              step === s.id && step < 6 ? 'active' : '',
-              step > s.id ? 'done' : '',
-              step < s.id ? 'disabled' : '',
-              s.id === 6 && step === 6 ? 'active' : '',
-            ].join(' ')}
-            aria-current={step === s.id ? 'step' : undefined}
-          >
-            <span className="step-num">{step > s.id && s.id < 6 ? '✓' : s.id}</span>
-            <span className="step-label">{s.label}</span>
-          </div>
-        ))}
+        {STEPS.map((s, index) => {
+          const isActive = step === s.id && step < 6;
+          const isDone = step > s.id;
+          const isDoneFinal = s.id === 6 && step === 6;
+          const isFuture = step < s.id;
+
+          const StepIcon = s.icon;
+
+          return (
+            <div key={s.id} style={{ display: 'flex', alignItems: 'center', flexGrow: index < STEPS.length - 1 ? 1 : 0 }}>
+              <div
+                className={[
+                  'step-pill',
+                  isActive ? 'active' : '',
+                  isDone ? 'done' : '',
+                  isFuture ? 'disabled' : '',
+                  isDoneFinal ? 'active' : '',
+                ].join(' ')}
+              >
+                <span className="step-num">
+                  {isDone && s.id < 6 ? <Check size={12} strokeWidth={3} /> : s.id}
+                </span>
+                <span className="step-label">{s.label}</span>
+              </div>
+              {index < STEPS.length - 1 && (
+                <div
+                  className={[
+                    'step-divider',
+                    isDone ? 'done' : '',
+                    isActive ? 'active' : '',
+                  ].join(' ')}
+                />
+              )}
+            </div>
+          );
+        })}
       </nav>
 
-      {/* ── Error Banner ── */}
+      {/* Error Banner */}
       {error && (
-        <div className="alert alert-err" role="alert">{error}</div>
+        <div className="alert alert-err" role="alert">
+          <AlertTriangle size={18} />
+          <span>{error}</span>
+        </div>
       )}
 
-      {/* ── Step Content ── */}
+      {/* Step Content Card */}
       <div className="card">
-        <div className="card-title">{stepTitles[step - 1]}</div>
+        <div className="card-title">
+          {getStepIcon(step)}
+          <span>{stepTitles[step - 1]}</span>
+        </div>
 
         {step === 1 && (
-          <StepCruise cruises={cruises} selected={cruise} onSelect={(c) => {
-            setCruise(c); setError('');
-          }} />
+          <StepCruise
+            cruises={cruises}
+            selected={cruise}
+            onSelect={(c) => {
+              setCruise(c);
+              setError('');
+            }}
+          />
         )}
 
         {step === 2 && (
           <StepTravellers
-            customer={customer} setCustomer={setCustomer}
-            adults={adults} setAdults={setAdults}
-            childAges={childAges} setChildAges={setChildAges}
+            customer={customer}
+            setCustomer={setCustomer}
+            adults={adults}
+            setAdults={setAdults}
+            childAges={childAges}
+            setChildAges={setChildAges}
           />
         )}
 
@@ -218,29 +294,27 @@ export default function App() {
           />
         )}
 
-        {step === 5 && (
-          <StepReview breakdown={breakdown} />
-        )}
+        {step === 5 && <StepReview breakdown={breakdown} />}
 
-        {step === 6 && (
-          <StepConfirmation booking={confirmedBooking} onStartOver={handleStartOver} />
-        )}
+        {step === 6 && <StepConfirmation booking={confirmedBooking} onStartOver={handleStartOver} />}
       </div>
 
-      {/* ── Navigation Buttons ── */}
+      {/* Stepper Navigation Buttons */}
       {step < 6 && (
-        <div className="btn-row">
+        <div className="navigation-bar">
           {step > 1 ? (
-            <button id="back-btn" className="btn btn-outline" onClick={goBack}>
-              ← Back
+            <button id="back-btn" className="btn btn-outline" onClick={goBack} type="button">
+              <ChevronLeft size={16} />
+              <span>Back</span>
             </button>
           ) : (
             <span />
           )}
 
           {step < 5 && (
-            <button id="next-btn" className="btn btn-primary" onClick={goNext}>
-              Next →
+            <button id="next-btn" className="btn btn-primary" onClick={goNext} type="button">
+              <span>Next</span>
+              <ChevronRight size={16} />
             </button>
           )}
 
@@ -250,8 +324,10 @@ export default function App() {
               className="btn btn-success"
               onClick={handleConfirm}
               disabled={!breakdown}
+              type="button"
             >
-              ✓ Confirm Booking
+              <Check size={16} strokeWidth={2.5} />
+              <span>Confirm & Lock Booking</span>
             </button>
           )}
         </div>

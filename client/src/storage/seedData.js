@@ -8,6 +8,7 @@ export const SEED_CRUISES = [
     baseAdultFare: 1200,
     capacity: 12,
     availableSeats: 12,
+    imageUrl: 'https://contents.odysol.com//content/images/cruise/8/89/ship_520.jpg',
   },
   {
     id: 'CRZ-102',
@@ -18,6 +19,7 @@ export const SEED_CRUISES = [
     baseAdultFare: 1850,
     capacity: 4,
     availableSeats: 4,
+    imageUrl: 'https://contents.odysol.com//content/images/cruise/8/13717/ship_520.jpg',
   },
   {
     id: 'CRZ-103',
@@ -28,6 +30,7 @@ export const SEED_CRUISES = [
     baseAdultFare: 950,
     capacity: 20,
     availableSeats: 20,
+    imageUrl: 'https://contents.odysol.com//content/images/cruise/8/13645/ship_520.jpg',
   },
   {
     id: 'CRZ-104',
@@ -38,6 +41,7 @@ export const SEED_CRUISES = [
     baseAdultFare: 2100,
     capacity: 2,
     availableSeats: 2,
+    imageUrl: 'https://contents.odysol.com//content/images/cruise/8/85/ship_520.jpg',
   },
   {
     id: 'CRZ-105',
@@ -48,6 +52,7 @@ export const SEED_CRUISES = [
     baseAdultFare: 700,
     capacity: 0,
     availableSeats: 0,
+    imageUrl: 'https://contents.odysol.com//content/images/cruise/8/76/ship_520.jpg',
   },
 ];
 
