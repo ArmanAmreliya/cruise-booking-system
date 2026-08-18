@@ -1,4 +1,4 @@
-import { Check, Ship, Calendar, Compass, Users, User, Mail } from 'lucide-react';
+import { Check } from 'lucide-react';
 import fmt from '../utils/fmt';
 
 export default function StepConfirmation({ booking, onStartOver }) {

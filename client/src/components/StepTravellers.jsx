@@ -1,4 +1,4 @@
-import { User, Mail, Phone, Users } from 'lucide-react';
+import { User, Users } from 'lucide-react';
 
 export default function StepTravellers({
   customer,

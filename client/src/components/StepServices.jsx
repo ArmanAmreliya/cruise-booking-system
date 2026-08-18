@@ -1,8 +1,7 @@
 import { Shield, Wifi, Compass, Check } from 'lucide-react';
 import fmt from '../utils/fmt';
 
-export default function StepServices({ services, selected, onToggle, cruise }) {
-  const nights = cruise?.durationNights ?? 1;
+export default function StepServices({ services, selected, onToggle, _cruise }) {
 
   // Render proper icon matching each service definition
   const renderServiceIcon = (id) => {

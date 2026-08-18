@@ -1,4 +1,4 @@
-import { Anchor, Calendar, Compass, Users } from 'lucide-react';
+import { Calendar, Compass, Users } from 'lucide-react';
 import fmt from '../utils/fmt';
 
 export default function StepCruise({ cruises, selected, onSelect }) {
