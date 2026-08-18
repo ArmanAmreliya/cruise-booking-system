@@ -8,6 +8,7 @@ const promotionsRoutes = require('./routes/promotions.routes');
 const monitoringRoutes = require('./routes/monitoring.routes');
 
 const monitoringMiddleware = require('./middleware/monitoring.middleware');
+const rateLimiter = require('./middleware/rateLimit.middleware');
 
 const app = express();
 
@@ -15,6 +16,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(monitoringMiddleware);
+app.use('/api', rateLimiter);
 
 // Routes
 app.use('/api', healthRoutes);
