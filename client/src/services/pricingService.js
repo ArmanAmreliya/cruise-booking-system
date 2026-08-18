@@ -1,8 +1,7 @@
 import { cruiseRepository } from '../storage/cruiseRepository';
 import { pricingRuleRepository } from '../storage/pricingRuleRepository';
 import { optionalServiceRepository } from '../storage/optionalServiceRepository';
-import { promoCodeRepository } from '../storage/promoCodeRepository';
-import { promoRedemptionRepository } from '../storage/promoRedemptionRepository';
+import { validatePromotion } from './promotionService';
 
 /**
  * Calculates a complete, itemized price breakdown for a cruise booking.
@@ -13,6 +12,7 @@ import { promoRedemptionRepository } from '../storage/promoRedemptionRepository'
  * @param {Array<number>|Array<{age: number}>|{adultCount: number, childrenAges: Array<number>}} params.passengers - Passenger specifications
  * @param {Array<string>} [params.selectedOptionalServiceIds=[]] - IDs of selected optional services
  * @param {string} [params.promoCode=''] - Promotional code string
+ * @param {string} [params.customerId] - Optional customer ID for promo validation
  * @param {string} [params.currentDate] - Optional date override for promo validation (ISO string 'YYYY-MM-DD')
  * @returns {Object} Complete price breakdown object with values in dollars and integer cents
  */
@@ -21,6 +21,7 @@ export const calculatePriceBreakdown = ({
   passengers: passengerInput,
   selectedOptionalServiceIds = [],
   promoCode = '',
+  customerId = null,
   currentDate = new Date().toISOString().split('T')[0],
 }) => {
   // 1. Resolve Cruise Document
@@ -114,10 +115,9 @@ export const calculatePriceBreakdown = ({
   // 7. Calculate Pre-Promo Subtotal
   const preDiscountSubtotalCents = discountedCruiseFareCents + optionalServicesSubtotalCents;
 
-  // 8. Evaluate Promotional Code
-  let promoDiscountCents = 0;
+  // 8. Evaluate Promotional Code using promotionService
   let promoResult = {
-    code: promoCode ? promoCode.trim().toUpperCase() : '',
+    code: promoCode ? promoCode.toString().trim().toUpperCase() : '',
     applied: false,
     discountType: null,
     discountValue: 0,
@@ -126,44 +126,27 @@ export const calculatePriceBreakdown = ({
     message: promoCode ? 'No promotional code applied' : 'None',
   };
 
-  if (promoCode && promoCode.trim()) {
-    const codeClean = promoCode.trim().toUpperCase();
-    const promoDoc = promoCodeRepository.getByCode(codeClean);
+  if (promoCode) {
+    const validation = validatePromotion({
+      promoCode,
+      customerId,
+      preDiscountSubtotal: preDiscountSubtotalCents,
+      isSubtotalInCents: true,
+      currentDate,
+    });
 
-    if (!promoDoc) {
-      promoResult.message = `Invalid promotional code '${codeClean}'`;
-    } else if (!promoDoc.active) {
-      promoResult.message = `Promotional code '${codeClean}' is inactive`;
-    } else if (promoDoc.startDate && currentDate < promoDoc.startDate) {
-      promoResult.message = `Promotional code '${codeClean}' is not active yet`;
-    } else if (promoDoc.endDate && currentDate > promoDoc.endDate) {
-      promoResult.message = `Promotional code '${codeClean}' has expired`;
-    } else if (promoDoc.minSpend && centsToDollars(preDiscountSubtotalCents) < promoDoc.minSpend) {
-      promoResult.message = `Minimum spend of $${promoDoc.minSpend} required for promo code '${codeClean}'`;
-    } else {
-      const totalRedemptions = promoRedemptionRepository.getByPromoCode(codeClean).length;
-      if (promoDoc.maxTotalRedemptions && totalRedemptions >= promoDoc.maxTotalRedemptions) {
-        promoResult.message = `Promotional code '${codeClean}' has reached maximum usage limit`;
-      } else {
-        // Valid Promo Code
-        if (promoDoc.discountType === 'PERCENTAGE') {
-          promoDiscountCents = Math.round(preDiscountSubtotalCents * (promoDoc.value / 100));
-        } else if (promoDoc.discountType === 'FIXED') {
-          promoDiscountCents = Math.min(preDiscountSubtotalCents, Math.round(promoDoc.value * 100));
-        }
-
-        promoResult = {
-          code: codeClean,
-          applied: true,
-          discountType: promoDoc.discountType,
-          discountValue: promoDoc.value,
-          amountCents: promoDiscountCents,
-          amount: centsToDollars(promoDiscountCents),
-          message: `Applied ${promoDoc.discountType === 'PERCENTAGE' ? `${promoDoc.value}%` : `$${promoDoc.value}`} discount`,
-        };
-      }
-    }
+    promoResult = {
+      code: validation.code,
+      applied: validation.valid,
+      discountType: validation.discountType,
+      discountValue: validation.discountValue,
+      amountCents: validation.discountAmountCents,
+      amount: validation.discountAmount,
+      message: validation.message,
+    };
   }
+
+  const promoDiscountCents = promoResult.amountCents;
 
   // 9. Calculate Taxable Amount & 12% Mandatory Tax
   const taxableAmountCents = Math.max(0, preDiscountSubtotalCents - promoDiscountCents);
@@ -220,30 +203,22 @@ export const calculatePriceBreakdown = ({
   };
 };
 
-/**
- * Helper to parse and validate passenger ages from flexible input structures
- */
 const parsePassengerAges = (input) => {
   if (!input) return [];
-
   let ages = [];
-
   if (Array.isArray(input)) {
     ages = input.map((item) => (typeof item === 'number' ? item : item && typeof item.age === 'number' ? item.age : NaN));
   } else if (typeof input === 'object') {
     const adultCount = input.adultCount || 0;
     const childrenAges = input.childrenAges || [];
-
     for (let i = 0; i < adultCount; i++) {
-      ages.push(30); // Default adult age 30 if not specified
+      ages.push(30);
     }
-
     if (Array.isArray(childrenAges)) {
       ages.push(...childrenAges);
     }
   }
 
-  // Validate ages
   ages.forEach((age) => {
     if (typeof age !== 'number' || isNaN(age) || age < 0 || !Number.isInteger(age)) {
       throw new Error(`Invalid passenger age: '${age}'. Age must be a non-negative integer.`);
@@ -253,29 +228,19 @@ const parsePassengerAges = (input) => {
   return ages;
 };
 
-/**
- * Helper to find matching child rule for a given age
- */
 const matchChildRule = (age, rules = []) => {
   return rules.find((rule) => age >= rule.minAge && age <= rule.maxAge);
 };
 
-/**
- * Helper to find matching group discount rule for a passenger count
- */
 const matchGroupRule = (count, rules = []) => {
   if (!rules || rules.length === 0) return null;
   const match = rules.find((rule) => count >= rule.minPassengers && count <= rule.maxPassengers);
   if (match) return match;
-  // If count exceeds highest tier maxPassengers, pick highest tier
   const sorted = [...rules].sort((a, b) => b.minPassengers - a.minPassengers);
   if (count >= sorted[0].minPassengers) return sorted[0];
   return null;
 };
 
-/**
- * Converts integer cents to formatted dollar float rounded to 2 decimals
- */
 const centsToDollars = (cents) => {
   return Math.round(cents) / 100;
 };

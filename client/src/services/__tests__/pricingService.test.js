@@ -241,7 +241,7 @@ describe('Pricing Engine Service (calculatePriceBreakdown)', () => {
       });
 
       expect(breakdown.promotionalDiscount.applied).toBe(false);
-      expect(breakdown.promotionalDiscount.message).toContain('Minimum spend of $1000 required');
+      expect(breakdown.promotionalDiscount.message).toContain('Minimum spend of $1,000 required');
       expect(breakdown.promotionalDiscount.amount).toBe(0);
     });
 
@@ -267,7 +267,7 @@ describe('Pricing Engine Service (calculatePriceBreakdown)', () => {
       });
 
       expect(breakdown.promotionalDiscount.applied).toBe(false);
-      expect(breakdown.promotionalDiscount.message).toContain('has expired');
+      expect(breakdown.promotionalDiscount.message).toContain('expired on');
     });
   });
 
