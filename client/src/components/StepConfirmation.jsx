@@ -1,81 +1,83 @@
+import { Check, Ship, Calendar, Compass, Users, User, Mail } from 'lucide-react';
 import fmt from '../utils/fmt';
 
-/**
- * Step 6 — Confirmation
- * Shows the booking reference and final summary.
- */
 export default function StepConfirmation({ booking, onStartOver }) {
   if (!booking) return null;
 
   return (
     <div>
-      <div className="confirm-hero">
-        <div className="confirm-icon" role="img" aria-label="Confirmed">🎉</div>
-        <p style={{ color: 'var(--muted)', fontSize: '.9rem', marginBottom: '.25rem' }}>
-          Your booking is confirmed!
+      <div className="confirm-banner">
+        <div className="confirm-success-icon">
+          <Check size={36} strokeWidth={3} />
+        </div>
+        <h2>Booking Confirmed</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem' }}>
+          Thank you! Your booking request has been successfully processed and confirmed.
         </p>
-        <div className="confirm-ref" aria-label="Booking reference">{booking.bookingReference}</div>
-        <div className="confirm-total">{fmt(booking.finalTotal)}</div>
-        <p style={{ color: 'var(--muted)', fontSize: '.8rem', marginTop: '.5rem' }}>
-          Confirmed on {new Date(booking.createdAt).toLocaleString()}
-        </p>
+
+        <div className="confirm-ref-box">
+          <div className="confirm-ref-label">Booking Reference</div>
+          <div className="confirm-ref-value">{booking.bookingReference}</div>
+        </div>
       </div>
 
-      <div className="confirm-summary">
-        <div className="confirm-row">
-          <span className="lbl">Cruise Line</span>
-          <span className="val">{booking.cruise.line}</span>
+      <div className="confirm-grid">
+        <div className="confirm-detail-item">
+          <div className="confirm-detail-label">Cruise Line</div>
+          <div className="confirm-detail-value">{booking.cruise.line}</div>
         </div>
-        <div className="confirm-row">
-          <span className="lbl">Ship</span>
-          <span className="val">{booking.cruise.name}</span>
+
+        <div className="confirm-detail-item">
+          <div className="confirm-detail-label">Ship / Vessel</div>
+          <div className="confirm-detail-value">{booking.cruise.name}</div>
         </div>
-        <div className="confirm-row">
-          <span className="lbl">Destination</span>
-          <span className="val">{booking.cruise.destination}</span>
+
+        <div className="confirm-detail-item">
+          <div className="confirm-detail-label">Destination</div>
+          <div className="confirm-detail-value">{booking.cruise.destination}</div>
         </div>
-        <div className="confirm-row">
-          <span className="lbl">Duration</span>
-          <span className="val">{booking.cruise.durationNights} nights</span>
+
+        <div className="confirm-detail-item">
+          <div className="confirm-detail-label">Sailing Duration</div>
+          <div className="confirm-detail-value">{booking.cruise.durationNights} Nights</div>
         </div>
-        <div className="confirm-row">
-          <span className="lbl">Passengers</span>
-          <span className="val">
-            {booking.passengerCounts.adults} adult{booking.passengerCounts.adults !== 1 ? 's' : ''}
+
+        <div className="confirm-detail-item">
+          <div className="confirm-detail-label">Primary Guest</div>
+          <div className="confirm-detail-value">{booking.customer.name}</div>
+        </div>
+
+        <div className="confirm-detail-item">
+          <div className="confirm-detail-label">Contact Email</div>
+          <div className="confirm-detail-value">{booking.customer.email}</div>
+        </div>
+
+        <div className="confirm-detail-item">
+          <div className="confirm-detail-label">Travelling Party</div>
+          <div className="confirm-detail-value">
+            {booking.passengerCounts.adults} Adult{booking.passengerCounts.adults !== 1 ? 's' : ''}
             {booking.passengerCounts.children > 0
-              ? `, ${booking.passengerCounts.children} child${booking.passengerCounts.children !== 1 ? 'ren' : ''}`
+              ? `, ${booking.passengerCounts.children} Child${booking.passengerCounts.children !== 1 ? 'ren' : ''}`
               : ''}
-          </span>
-        </div>
-        <div className="confirm-row">
-          <span className="lbl">Guest Name</span>
-          <span className="val">{booking.customer.name}</span>
-        </div>
-        <div className="confirm-row">
-          <span className="lbl">Email</span>
-          <span className="val">{booking.customer.email}</span>
-        </div>
-        {booking.appliedPromotionalCode && (
-          <div className="confirm-row">
-            <span className="lbl">Promo Applied</span>
-            <span className="val">{booking.appliedPromotionalCode.code}</span>
           </div>
-        )}
-        <div className="confirm-row">
-          <span className="lbl">Amount Charged</span>
-          <span className="val" style={{ color: 'var(--primary)', fontWeight: 800 }}>
+        </div>
+
+        <div className="confirm-detail-item">
+          <div className="confirm-detail-label">Total Amount Charged</div>
+          <div className="confirm-detail-value" style={{ color: 'var(--success)' }}>
             {fmt(booking.finalTotal)}
-          </span>
+          </div>
         </div>
       </div>
 
-      <div className="btn-row" style={{ marginTop: '2rem', justifyContent: 'center' }}>
+      <div className="navigation-bar" style={{ justifyContent: 'center', marginTop: '2.5rem' }}>
         <button
           id="start-over-btn"
           className="btn btn-outline"
           onClick={onStartOver}
+          type="button"
         >
-          Book Another Cruise
+          Book Another Voyage
         </button>
       </div>
     </div>

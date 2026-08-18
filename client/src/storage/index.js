@@ -1,5 +1,5 @@
 import { storageDriver } from './storageDriver';
-import { STORAGE_KEYS } from './keys';
+import { STORAGE_KEYS, CURRENT_SEED_VERSION } from './keys';
 import { cruiseRepository } from './cruiseRepository';
 import { customerRepository } from './customerRepository';
 import { bookingRepository } from './bookingRepository';
@@ -13,9 +13,12 @@ export const initLocalStorage = (forceReset = false) => {
     storageDriver.clear();
   }
 
-  // Populate missing seed items
-  if (!storageDriver.getItem(STORAGE_KEYS.CRUISES)) {
+  // Re-seed cruises any time the seed version bumps (e.g. new image URLs).
+  // This preserves bookings and other user data — only cruise catalogue is refreshed.
+  const storedVersion = storageDriver.getItem(STORAGE_KEYS.SEED_VERSION);
+  if (!storedVersion || storedVersion !== CURRENT_SEED_VERSION) {
     cruiseRepository.reset();
+    storageDriver.setItem(STORAGE_KEYS.SEED_VERSION, CURRENT_SEED_VERSION);
   }
 
   if (!storageDriver.getItem(STORAGE_KEYS.PROMO_CODES)) {
